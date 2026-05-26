@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { CalendarDays, MapPin, Lock, CheckCircle2 } from 'lucide-react';
+import {
+  CalendarDays,
+  MapPin,
+  Lock,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react';
 import type { Match, Prediction } from '../types';
 import { isMatchLocked } from '../lib/dates';
 import { formatDateTimeInTimezone } from '../lib/timezone';
@@ -24,8 +30,9 @@ export function MatchCard({
 }: Props) {
   const [isPredicting, setIsPredicting] = useState(false);
 
-  const locked = isMatchLocked(match.kickoffUtc);
+  const lockedByTime = isMatchLocked(match.kickoffUtc);
   const finished = match.status === 'finished';
+  const teamsPending = hasPendingTeams(match);
 
   async function handleSavePrediction(
     matchId: string,
@@ -35,6 +42,15 @@ export function MatchCard({
     await onSavePrediction?.(matchId, predictedHomeScore, predictedAwayScore);
     setIsPredicting(false);
   }
+
+  const buttonLabel = getButtonLabel({
+    finished,
+    lockedByTime,
+    teamsPending,
+    hasPrediction: Boolean(prediction),
+  });
+
+  const isButtonDisabled = finished || lockedByTime || teamsPending;
 
   return (
     <article className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
@@ -48,11 +64,19 @@ export function MatchCard({
           )}
         </div>
 
-        <StatusBadge locked={locked} finished={finished} />
+        <StatusBadge
+          lockedByTime={lockedByTime}
+          finished={finished}
+          teamsPending={teamsPending}
+        />
       </div>
 
       <div className="my-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <Team name={match.homeTeam} code={match.homeTeamCode} />
+        <Team
+          name={match.homeTeam}
+          code={match.homeTeamCode}
+          isPlaceholder={isPlaceholderTeam(match.homeTeam)}
+        />
 
         <div className="text-center">
           {finished ? (
@@ -64,8 +88,28 @@ export function MatchCard({
           )}
         </div>
 
-        <Team name={match.awayTeam} code={match.awayTeamCode} align="right" />
+        <Team
+          name={match.awayTeam}
+          code={match.awayTeamCode}
+          align="right"
+          isPlaceholder={isPlaceholderTeam(match.awayTeam)}
+        />
       </div>
+
+      {teamsPending && (
+        <div className="mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3">
+          <div className="flex gap-2 text-amber-100">
+            <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Equipas ainda por definir</p>
+              <p className="mt-1 text-sm text-amber-100/80">
+                Este jogo será desbloqueado automaticamente quando as equipas
+                reais forem atualizadas.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {prediction && (
         <div className="mb-4 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3">
@@ -98,21 +142,15 @@ export function MatchCard({
 
       {!isPredicting && (
         <button
-          disabled={locked || finished}
+          disabled={isButtonDisabled}
           onClick={() => setIsPredicting(true)}
           className="mt-4 w-full rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
         >
-          {finished
-            ? 'Jogo finalizado'
-            : locked
-            ? 'Palpite bloqueado'
-            : prediction
-            ? 'Editar palpite'
-            : 'Dar palpite'}
+          {buttonLabel}
         </button>
       )}
 
-      {isPredicting && !locked && !finished && (
+      {isPredicting && !lockedByTime && !finished && !teamsPending && (
         <PredictionForm
           match={match}
           currentPrediction={prediction}
@@ -128,25 +166,35 @@ function Team({
   name,
   code,
   align = 'left',
+  isPlaceholder = false,
 }: {
   name: string;
   code?: string;
   align?: 'left' | 'right';
+  isPlaceholder?: boolean;
 }) {
   return (
     <div className={align === 'right' ? 'text-right' : 'text-left'}>
-      <p className="text-lg font-bold">{name}</p>
+      <p
+        className={`text-lg font-bold ${
+          isPlaceholder ? 'text-amber-200' : 'text-white'
+        }`}
+      >
+        {name}
+      </p>
       {code && <p className="text-sm text-slate-400">{code}</p>}
     </div>
   );
 }
 
 function StatusBadge({
-  locked,
+  lockedByTime,
   finished,
+  teamsPending,
 }: {
-  locked: boolean;
+  lockedByTime: boolean;
   finished: boolean;
+  teamsPending: boolean;
 }) {
   if (finished) {
     return (
@@ -157,7 +205,16 @@ function StatusBadge({
     );
   }
 
-  if (locked) {
+  if (teamsPending) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
+        <AlertTriangle size={14} />
+        Por definir
+      </span>
+    );
+  }
+
+  if (lockedByTime) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
         <Lock size={14} />
@@ -171,4 +228,50 @@ function StatusBadge({
       Aberto
     </span>
   );
+}
+
+function getButtonLabel({
+  finished,
+  lockedByTime,
+  teamsPending,
+  hasPrediction,
+}: {
+  finished: boolean;
+  lockedByTime: boolean;
+  teamsPending: boolean;
+  hasPrediction: boolean;
+}) {
+  if (finished) return 'Jogo finalizado';
+  if (lockedByTime) return 'Palpite bloqueado';
+  if (teamsPending) return 'Palpite indisponível';
+  if (hasPrediction) return 'Editar palpite';
+  return 'Dar palpite';
+}
+
+function hasPendingTeams(match: Match) {
+  return isPlaceholderTeam(match.homeTeam) || isPlaceholderTeam(match.awayTeam);
+}
+
+function isPlaceholderTeam(teamName: string) {
+  const normalized = teamName.trim().toLowerCase();
+
+  if (!normalized) return true;
+
+  const placeholderPatterns = [
+    'a definir',
+    'grupo',
+    'vencedor',
+    'perdedor',
+    '1.º',
+    '2.º',
+    '3.º',
+    '1º',
+    '2º',
+    '3º',
+    'winner',
+    'runner-up',
+    'third',
+  ];
+
+  return placeholderPatterns.some((pattern) => normalized.includes(pattern));
 }

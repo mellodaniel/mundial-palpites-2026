@@ -11,6 +11,8 @@ type MatchRow = {
   away_team: string | null;
   home_team_code: string | null;
   away_team_code: string | null;
+  home_team_placeholder: string | null;
+  away_team_placeholder: string | null;
   stadium: string | null;
   city: string | null;
   country: string | null;
@@ -34,6 +36,8 @@ export async function getMatches(): Promise<Match[]> {
       away_team,
       home_team_code,
       away_team_code,
+      home_team_placeholder,
+      away_team_placeholder,
       stadium,
       city,
       country,
@@ -59,10 +63,12 @@ export function mapMatchRowToMatch(row: MatchRow): Match {
     matchNumber: row.match_number ?? 0,
     stage: row.stage,
     groupName: row.group_name ?? undefined,
-    homeTeam: row.home_team ?? 'A definir',
-    awayTeam: row.away_team ?? 'A definir',
+    homeTeam: row.home_team ?? row.home_team_placeholder ?? 'A definir',
+    awayTeam: row.away_team ?? row.away_team_placeholder ?? 'A definir',
     homeTeamCode: row.home_team_code ?? undefined,
     awayTeamCode: row.away_team_code ?? undefined,
+    homeTeamPlaceholder: row.home_team_placeholder ?? undefined,
+    awayTeamPlaceholder: row.away_team_placeholder ?? undefined,
     stadium: row.stadium ?? 'Estádio a definir',
     city: row.city ?? 'Cidade a definir',
     country: row.country ?? '',

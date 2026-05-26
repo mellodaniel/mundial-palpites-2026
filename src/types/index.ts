@@ -10,6 +10,8 @@ export type Match = {
   awayTeam: string;
   homeTeamCode?: string;
   awayTeamCode?: string;
+  homeTeamPlaceholder?: string;
+  awayTeamPlaceholder?: string;
   stadium: string;
   city: string;
   country: string;
