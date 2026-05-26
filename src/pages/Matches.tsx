@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, Layers } from 'lucide-react';
+import { GroupsInfoAccordion } from '../components/GroupsInfoAccordion';
 import { MatchesAccordion } from '../components/MatchesAccordion';
 import { groupMatchesByDay, groupMatchesByGroup } from '../lib/groupMatches';
 import { useMatches } from '../lib/useMatches';
@@ -39,34 +40,6 @@ export function Matches() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/5 p-1 sm:inline-grid">
-        <button
-          type="button"
-          onClick={() => setViewMode('group')}
-          className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold ${
-            viewMode === 'group'
-              ? 'bg-emerald-500 text-slate-950'
-              : 'text-slate-300 hover:bg-white/10'
-          }`}
-        >
-          <Layers size={18} />
-          Por grupo
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setViewMode('day')}
-          className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold ${
-            viewMode === 'day'
-              ? 'bg-emerald-500 text-slate-950'
-              : 'text-slate-300 hover:bg-white/10'
-          }`}
-        >
-          <CalendarDays size={18} />
-          Por dia
-        </button>
-      </div>
-
       {(isLoadingMatches || isLoadingPredictions) && (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-300">
           A carregar jogos e palpites...
@@ -82,24 +55,53 @@ export function Matches() {
       {!isLoadingMatches &&
         !isLoadingPredictions &&
         !matchesError &&
-        !predictionsError &&
-        groups.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-300">
-            Ainda não existem jogos carregados.
-          </div>
-        )}
+        !predictionsError && (
+          <>
+            <GroupsInfoAccordion matches={matches} />
 
-      {!isLoadingMatches &&
-        !isLoadingPredictions &&
-        !matchesError &&
-        !predictionsError &&
-        groups.length > 0 && (
-          <MatchesAccordion
-            groups={groups}
-            predictions={predictions}
-            timezone={timezone}
-            onSavePrediction={savePrediction}
-          />
+            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/5 p-1 sm:inline-grid">
+              <button
+                type="button"
+                onClick={() => setViewMode('group')}
+                className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold ${
+                  viewMode === 'group'
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <Layers size={18} />
+                Por grupo
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('day')}
+                className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold ${
+                  viewMode === 'day'
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <CalendarDays size={18} />
+                Por dia
+              </button>
+            </div>
+
+            {groups.length === 0 && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-300">
+                Ainda não existem jogos carregados.
+              </div>
+            )}
+
+            {groups.length > 0 && (
+              <MatchesAccordion
+                groups={groups}
+                predictions={predictions}
+                timezone={timezone}
+                onSavePrediction={savePrediction}
+              />
+            )}
+          </>
         )}
     </div>
   );
