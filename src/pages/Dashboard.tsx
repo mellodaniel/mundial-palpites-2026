@@ -1,5 +1,6 @@
 import { CalendarDays, Trophy, Target, Users, CheckCircle2 } from 'lucide-react';
 import { MatchCard } from '../components/MatchCard';
+import { ScoringRulesAccordion } from '../components/ScoringRulesAccordion';
 import { useMatches } from '../lib/useMatches';
 import { usePredictions } from '../lib/usePredictions';
 import { useProfile } from '../lib/useProfile';
@@ -58,6 +59,8 @@ export function Dashboard() {
         <p className="text-sm text-slate-400">Horário local da tua conta</p>
         <p className="mt-1 text-lg font-bold text-emerald-300">{timezone}</p>
       </section>
+
+      <ScoringRulesAccordion />
 
       {errorMessage && (
         <div className="rounded-2xl border border-red-400/30 bg-red-400/10 p-5 text-red-200">
