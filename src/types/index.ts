@@ -19,6 +19,25 @@ export type Match = {
   awayScore?: number;
 };
 
+export type MatchImportItem = {
+  externalId: string;
+  matchNumber: number;
+  stage: string;
+  groupName?: string;
+  homeTeam?: string;
+  awayTeam?: string;
+  homeTeamCode?: string;
+  awayTeamCode?: string;
+  homeTeamPlaceholder?: string;
+  awayTeamPlaceholder?: string;
+  stadium: string;
+  city: string;
+  country: string;
+  kickoffUtc: string;
+  status?: MatchStatus;
+  source?: string;
+};
+
 export type Prediction = {
   id: string;
   userId: string;

@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { calculatePredictionPoints } from './scoring';
+import type { MatchImportItem } from '../types';
 
 type PredictionResultRow = {
   id: string;
@@ -101,4 +102,47 @@ export async function reopenMatch(params: { matchId: string }) {
   if (predictionsError) {
     throw predictionsError;
   }
+}
+
+export async function importMatchesFromJson(matches: MatchImportItem[]) {
+  if (!Array.isArray(matches) || matches.length === 0) {
+    throw new Error('O ficheiro JSON não contém jogos para importar.');
+  }
+
+  const rows = matches.map((match) => ({
+    external_id: match.externalId,
+    match_number: match.matchNumber,
+    stage: match.stage,
+    group_name: match.groupName ?? null,
+
+    home_team: match.homeTeam ?? match.homeTeamPlaceholder ?? 'A definir',
+    away_team: match.awayTeam ?? match.awayTeamPlaceholder ?? 'A definir',
+    home_team_code: match.homeTeamCode ?? null,
+    away_team_code: match.awayTeamCode ?? null,
+
+    home_team_placeholder: match.homeTeamPlaceholder ?? null,
+    away_team_placeholder: match.awayTeamPlaceholder ?? null,
+
+    stadium: match.stadium,
+    city: match.city,
+    country: match.country,
+    kickoff_utc: match.kickoffUtc,
+
+    status: match.status ?? 'scheduled',
+    source: match.source ?? 'json-import',
+    last_synced_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabase.from('matches').upsert(rows, {
+    onConflict: 'external_id',
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    importedMatches: rows.length,
+  };
 }

@@ -7,9 +7,15 @@ import {
   CheckCircle2,
   Clock,
   Trophy,
+  Upload,
 } from 'lucide-react';
 import { useMatches } from '../lib/useMatches';
-import { finishMatchAndRecalculatePoints, reopenMatch } from '../lib/adminApi';
+import {
+  finishMatchAndRecalculatePoints,
+  importMatchesFromJson,
+  reopenMatch,
+} from '../lib/adminApi';
+import type { MatchImportItem } from '../types';
 
 type StatusFilter = 'all' | 'scheduled' | 'finished';
 
@@ -23,6 +29,9 @@ export function Admin() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [groupFilter, setGroupFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [jsonImportText, setJsonImportText] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -161,6 +170,30 @@ export function Admin() {
     }
   }
 
+  async function handleImportMatches() {
+    try {
+      setIsImporting(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      const parsed = JSON.parse(jsonImportText) as MatchImportItem[];
+
+      const result = await importMatchesFromJson(parsed);
+
+      setJsonImportText('');
+      setSuccessMessage(`${result.importedMatches} jogo(s) importado(s).`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Erro ao importar jogos. Verifica o formato do JSON.';
+
+      setErrorMessage(message);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   function resetFilters() {
     setStatusFilter('all');
     setGroupFilter('all');
@@ -172,7 +205,8 @@ export function Admin() {
       <div>
         <h2 className="text-2xl font-black">Admin</h2>
         <p className="text-sm text-slate-400">
-          Área para inserir resultados, reabrir jogos e recalcular pontuações.
+          Área para importar jogos, inserir resultados, reabrir jogos e
+          recalcular pontuações.
         </p>
       </div>
 
@@ -208,6 +242,63 @@ export function Admin() {
 
       {!isLoadingMatches && !matchesError && (
         <>
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Upload size={20} className="text-emerald-300" />
+              <div>
+                <h3 className="font-bold">Importar jogos por JSON</h3>
+                <p className="text-sm text-slate-400">
+                  Cola uma lista de jogos em JSON. A importação usa externalId
+                  para criar ou atualizar jogos.
+                </p>
+              </div>
+            </div>
+
+            <textarea
+              value={jsonImportText}
+              onChange={(event) => setJsonImportText(event.target.value)}
+              className="min-h-40 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-mono text-sm text-white outline-none focus:border-emerald-400"
+              placeholder={`[
+  {
+    "externalId": "fifa-2026-001",
+    "matchNumber": 1,
+    "stage": "Fase de Grupos",
+    "groupName": "Grupo A",
+    "homeTeam": "México",
+    "awayTeam": "África do Sul",
+    "homeTeamCode": "MEX",
+    "awayTeamCode": "RSA",
+    "stadium": "Estadio Azteca",
+    "city": "Cidade do México",
+    "country": "México",
+    "kickoffUtc": "2026-06-11T19:00:00Z",
+    "source": "fifa"
+  }
+]`}
+            />
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleImportMatches}
+                disabled={isImporting || !jsonImportText.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+              >
+                <Upload size={18} />
+                {isImporting ? 'A importar...' : 'Importar jogos'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setJsonImportText('')}
+                disabled={isImporting || !jsonImportText.trim()}
+                className="rounded-xl bg-white/10 px-4 py-3 font-semibold text-slate-200 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Limpar JSON
+              </button>
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="mb-4 flex items-center gap-2">
               <Filter size={20} className="text-emerald-300" />
