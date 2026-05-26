@@ -10,7 +10,6 @@ import {
   Trash2,
   Trophy,
   UserMinus,
-  Users,
 } from 'lucide-react';
 import {
   deleteLeague,

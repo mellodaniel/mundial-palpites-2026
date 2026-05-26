@@ -16,7 +16,7 @@ export function MatchCard({
     matchId: string;
     predictedHomeScore: number;
     predictedAwayScore: number;
-  }) => Promise<void>;
+  }) => Promise<Prediction | void>;
 }) {
   const [homeScore, setHomeScore] = useState(
     prediction?.predictedHomeScore?.toString() ?? ''

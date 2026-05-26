@@ -1,12 +1,13 @@
+import type { AccountStatus, Profile } from '../types';
 import { supabase } from './supabase';
-import type { Profile } from '../types';
 
 type ProfileRow = {
   id: string;
-  name: string;
+  name: string | null;
   avatar_url: string | null;
   is_admin: boolean | null;
   timezone: string | null;
+  account_status: AccountStatus | null;
 };
 
 export async function getProfile(userId: string): Promise<Profile> {
@@ -18,7 +19,8 @@ export async function getProfile(userId: string): Promise<Profile> {
       name,
       avatar_url,
       is_admin,
-      timezone
+      timezone,
+      account_status
     `
     )
     .eq('id', userId)
@@ -28,26 +30,29 @@ export async function getProfile(userId: string): Promise<Profile> {
     throw error;
   }
 
-  return mapProfileRowToProfile(data);
+  return mapProfileRowToProfile(data as ProfileRow);
 }
 
-export async function updateProfileTimezone(
-  userId: string,
-  timezone: string
-): Promise<Profile> {
+export async function updateProfileTimezone(params: {
+  userId: string;
+  timezone: string;
+}): Promise<Profile> {
+  const cleanTimezone = params.timezone.trim() || 'Europe/Lisbon';
+
   const { data, error } = await supabase
     .from('profiles')
     .update({
-      timezone,
+      timezone: cleanTimezone,
     })
-    .eq('id', userId)
+    .eq('id', params.userId)
     .select(
       `
       id,
       name,
       avatar_url,
       is_admin,
-      timezone
+      timezone,
+      account_status
     `
     )
     .single();
@@ -56,15 +61,16 @@ export async function updateProfileTimezone(
     throw error;
   }
 
-  return mapProfileRowToProfile(data);
+  return mapProfileRowToProfile(data as ProfileRow);
 }
 
 function mapProfileRowToProfile(row: ProfileRow): Profile {
   return {
     id: row.id,
-    name: row.name,
+    name: row.name || 'Utilizador',
     avatarUrl: row.avatar_url ?? undefined,
-    isAdmin: row.is_admin ?? false,
-    timezone: row.timezone ?? 'Europe/Lisbon',
+    isAdmin: Boolean(row.is_admin),
+    timezone: row.timezone || 'Europe/Lisbon',
+    accountStatus: row.account_status ?? 'active',
   };
 }
