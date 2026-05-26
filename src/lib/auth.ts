@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getBrowserTimezone } from './timezone';
 
 export async function signUpWithEmail(
   name: string,
@@ -25,6 +26,7 @@ export async function signUpWithEmail(
   const { error: profileError } = await supabase.from('profiles').upsert({
     id: user.id,
     name,
+    timezone: getBrowserTimezone(),
   });
 
   if (profileError) {

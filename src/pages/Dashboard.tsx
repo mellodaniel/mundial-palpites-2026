@@ -2,8 +2,10 @@ import { CalendarDays, Trophy, Target, Users } from 'lucide-react';
 import { MatchCard } from '../components/MatchCard';
 import { useMatches } from '../lib/useMatches';
 import { usePredictions } from '../lib/usePredictions';
+import { useProfile } from '../lib/useProfile';
 
 export function Dashboard() {
+  const { profile } = useProfile();
   const { matches, isLoadingMatches, matchesError } = useMatches();
   const {
     predictions,
@@ -12,6 +14,7 @@ export function Dashboard() {
     savePrediction,
   } = usePredictions();
 
+  const timezone = profile?.timezone ?? 'Europe/Lisbon';
   const nextMatches = matches.slice(0, 2);
 
   return (
@@ -27,6 +30,11 @@ export function Dashboard() {
           Dá palpites antes dos jogos, acompanha os resultados e sobe no ranking
           à medida que fores acertando.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-sm text-slate-400">Horário local da tua conta</p>
+        <p className="mt-1 text-lg font-bold text-emerald-300">{timezone}</p>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -75,6 +83,7 @@ export function Dashboard() {
             <MatchCard
               key={match.id}
               match={match}
+              timezone={timezone}
               prediction={predictions.find(
                 (prediction) => prediction.matchId === match.id
               )}

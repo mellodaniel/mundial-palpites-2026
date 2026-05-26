@@ -6,6 +6,7 @@ type ProfileRow = {
   name: string;
   avatar_url: string | null;
   is_admin: boolean | null;
+  timezone: string | null;
 };
 
 export async function getProfile(userId: string): Promise<Profile> {
@@ -16,7 +17,8 @@ export async function getProfile(userId: string): Promise<Profile> {
       id,
       name,
       avatar_url,
-      is_admin
+      is_admin,
+      timezone
     `
     )
     .eq('id', userId)
@@ -29,11 +31,25 @@ export async function getProfile(userId: string): Promise<Profile> {
   return mapProfileRowToProfile(data);
 }
 
+export async function updateProfileTimezone(userId: string, timezone: string) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      timezone,
+    })
+    .eq('id', userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 function mapProfileRowToProfile(row: ProfileRow): Profile {
   return {
     id: row.id,
     name: row.name,
     avatarUrl: row.avatar_url ?? undefined,
     isAdmin: row.is_admin ?? false,
+    timezone: row.timezone ?? 'Europe/Lisbon',
   };
 }

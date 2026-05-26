@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { CalendarDays, MapPin, Lock, CheckCircle2 } from 'lucide-react';
 import type { Match, Prediction } from '../types';
-import { formatPortugalDateTime, isMatchLocked } from '../lib/dates';
+import { isMatchLocked } from '../lib/dates';
+import { formatDateTimeInTimezone } from '../lib/timezone';
 import { PredictionForm } from './PredictionForm';
 
 type Props = {
   match: Match;
   prediction?: Prediction;
+  timezone?: string;
   onSavePrediction?: (
     matchId: string,
     predictedHomeScore: number,
@@ -14,7 +16,12 @@ type Props = {
   ) => Promise<void> | void;
 };
 
-export function MatchCard({ match, prediction, onSavePrediction }: Props) {
+export function MatchCard({
+  match,
+  prediction,
+  timezone,
+  onSavePrediction,
+}: Props) {
   const [isPredicting, setIsPredicting] = useState(false);
 
   const locked = isMatchLocked(match.kickoffUtc);
@@ -75,7 +82,10 @@ export function MatchCard({ match, prediction, onSavePrediction }: Props) {
       <div className="space-y-2 border-t border-white/10 pt-3 text-sm text-slate-300">
         <div className="flex items-center gap-2">
           <CalendarDays size={16} className="text-emerald-300" />
-          <span>{formatPortugalDateTime(match.kickoffUtc)} Portugal</span>
+          <span>
+            {formatDateTimeInTimezone(match.kickoffUtc, timezone)} · horário
+            local
+          </span>
         </div>
 
         <div className="flex items-center gap-2">

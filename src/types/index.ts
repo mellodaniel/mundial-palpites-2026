@@ -44,4 +44,5 @@ export type Profile = {
   name: string;
   avatarUrl?: string;
   isAdmin: boolean;
+  timezone: string;
 };
