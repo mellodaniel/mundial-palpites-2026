@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Copy, LogIn, Plus, Shield, Trophy, Users, XCircle } from 'lucide-react';
+import {
+  Copy,
+  LogIn,
+  Plus,
+  Shield,
+  Trophy,
+  Users,
+  XCircle,
+  BarChart3,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { League } from '../types';
 import { useLeagues } from '../lib/useLeagues';
 import { useProfile } from '../lib/useProfile';
@@ -303,7 +313,15 @@ function LeagueCard({
         </p>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <Link
+          to={`/ranking?liga=${league.id}`}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 hover:bg-emerald-400"
+        >
+          <BarChart3 size={18} />
+          Ver ranking
+        </Link>
+
         <button
           type="button"
           onClick={() => onCopyInviteCode(league.inviteCode)}

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BarChart3, Medal, Trophy } from 'lucide-react';
 import type { RankingRow } from '../types';
 import { useLeagues } from '../lib/useLeagues';
@@ -8,8 +9,24 @@ type RankingScope = 'global' | string;
 
 export function Ranking() {
   const { leagues, isLoadingLeagues, leaguesError } = useLeagues();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [selectedScope, setSelectedScope] = useState<RankingScope>('global');
+  const leagueIdFromUrl = searchParams.get('liga');
+
+  const [selectedScope, setSelectedScope] = useState<RankingScope>(
+    leagueIdFromUrl || 'global'
+  );
+
+  useEffect(() => {
+    const leagueId = searchParams.get('liga');
+
+    if (leagueId) {
+      setSelectedScope(leagueId);
+      return;
+    }
+
+    setSelectedScope('global');
+  }, [searchParams]);
 
   const selectedLeagueId =
     selectedScope === 'global' ? undefined : selectedScope;
@@ -21,6 +38,19 @@ export function Ranking() {
     () => leagues.find((league) => league.id === selectedLeagueId),
     [leagues, selectedLeagueId]
   );
+
+  function handleScopeChange(value: string) {
+    setSelectedScope(value);
+
+    if (value === 'global') {
+      setSearchParams({});
+      return;
+    }
+
+    setSearchParams({
+      liga: value,
+    });
+  }
 
   const title =
     selectedScope === 'global'
@@ -34,6 +64,10 @@ export function Ranking() {
 
   const isLoading = isLoadingRanking || isLoadingLeagues;
   const errorMessage = rankingError || leaguesError;
+
+  const selectedLeagueExists =
+    selectedScope === 'global' ||
+    leagues.some((league) => league.id === selectedScope);
 
   return (
     <div className="space-y-5">
@@ -65,7 +99,7 @@ export function Ranking() {
 
         <select
           value={selectedScope}
-          onChange={(event) => setSelectedScope(event.target.value)}
+          onChange={(event) => handleScopeChange(event.target.value)}
           className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none focus:border-emerald-400"
         >
           <option value="global">Ranking Global</option>
@@ -81,6 +115,13 @@ export function Ranking() {
           <p className="mt-3 text-sm text-amber-300">
             Ainda não estás em nenhuma liga privada. Podes entrar numa liga no
             menu Ligas.
+          </p>
+        )}
+
+        {!isLoadingLeagues && !selectedLeagueExists && (
+          <p className="mt-3 text-sm text-amber-300">
+            Esta liga não está disponível para o teu utilizador. A mostrar
+            ranking global.
           </p>
         )}
       </section>
