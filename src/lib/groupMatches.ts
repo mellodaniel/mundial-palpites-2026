@@ -8,6 +8,30 @@ export type MatchGroup = {
   matches: Match[];
 };
 
+const GROUP_STAGE_ORDER = [
+  'Grupo A',
+  'Grupo B',
+  'Grupo C',
+  'Grupo D',
+  'Grupo E',
+  'Grupo F',
+  'Grupo G',
+  'Grupo H',
+  'Grupo I',
+  'Grupo J',
+  'Grupo K',
+  'Grupo L',
+];
+
+const KNOCKOUT_STAGE_ORDER = [
+  'Ronda de 32',
+  'Ronda de 16',
+  'Quartos de Final',
+  'Meia-final',
+  '3.º lugar',
+  'Final',
+];
+
 export function groupMatchesByGroup(matches: Match[]): MatchGroup[] {
   const grouped = new Map<string, Match[]>();
 
@@ -22,11 +46,11 @@ export function groupMatchesByGroup(matches: Match[]): MatchGroup[] {
   }
 
   return Array.from(grouped.entries())
-    .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+    .sort(([groupA], [groupB]) => getGroupOrder(groupA) - getGroupOrder(groupB))
     .map(([key, groupMatches]) => ({
       key: `group-${key}`,
       title: key,
-      matches: sortMatchesByKickoff(groupMatches),
+      matches: sortMatchesByNumber(groupMatches),
     }));
 }
 
@@ -60,9 +84,29 @@ export function groupMatchesByDay(
     });
 }
 
+function getGroupOrder(groupName: string) {
+  const groupIndex = GROUP_STAGE_ORDER.indexOf(groupName);
+
+  if (groupIndex >= 0) {
+    return groupIndex;
+  }
+
+  const knockoutIndex = KNOCKOUT_STAGE_ORDER.indexOf(groupName);
+
+  if (knockoutIndex >= 0) {
+    return GROUP_STAGE_ORDER.length + knockoutIndex;
+  }
+
+  return 999;
+}
+
 function sortMatchesByKickoff(matches: Match[]) {
   return [...matches].sort(
     (a, b) =>
       new Date(a.kickoffUtc).getTime() - new Date(b.kickoffUtc).getTime()
   );
+}
+
+function sortMatchesByNumber(matches: Match[]) {
+  return [...matches].sort((a, b) => a.matchNumber - b.matchNumber);
 }
