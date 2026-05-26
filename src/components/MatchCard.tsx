@@ -24,6 +24,7 @@ export function MatchCard({
   const [awayScore, setAwayScore] = useState(
     prediction?.predictedAwayScore?.toString() ?? ''
   );
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -78,12 +79,20 @@ export function MatchCard({
         predictedAwayScore: parsedAwayScore,
       });
 
-      setSuccessMessage('Palpite guardado.');
+      setStatsRefreshKey((current) => current + 1);
+      setSuccessMessage('Palpite guardado. Estatísticas atualizadas.');
     } catch (error) {
+      console.error('Erro ao guardar palpite:', error);
+
       const message =
-        error instanceof Error ? error.message : 'Erro ao guardar palpite.';
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message?: unknown }).message)
+            : 'Erro ao guardar palpite.';
 
       setErrorMessage(message);
+      setSuccessMessage('');
     } finally {
       setIsSaving(false);
     }
@@ -136,6 +145,7 @@ export function MatchCard({
         matchId={match.id}
         homeTeam={match.homeTeam}
         awayTeam={match.awayTeam}
+        refreshKey={statsRefreshKey}
       />
 
       {isFinished && (

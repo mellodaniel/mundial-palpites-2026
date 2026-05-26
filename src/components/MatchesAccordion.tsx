@@ -1,126 +1,106 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import type { Match, Prediction } from '../types';
-import type { MatchGroup } from '../lib/groupMatches';
-import { MatchCard } from './MatchCard';
-
-type Props = {
-  groups: MatchGroup[];
-  predictions: Prediction[];
-  timezone: string;
-  onSavePrediction: (
-    matchId: string,
-    predictedHomeScore: number,
-    predictedAwayScore: number
-  ) => Promise<void> | void;
-};
+import { useMemo, useState } from "react";
+import { CalendarDays, ChevronDown, ChevronRight } from "lucide-react";
+import type { Match, Prediction } from "../types";
+import { MatchCard } from "./MatchCard";
 
 export function MatchesAccordion({
-  groups,
-  predictions,
+  title,
+  description,
+  matches,
   timezone,
+  predictions,
   onSavePrediction,
-}: Props) {
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
+  defaultOpen = false,
+}: {
+  title: string;
+  description?: string;
+  matches: Match[];
+  timezone: string;
+  predictions: Prediction[];
+  onSavePrediction: (params: {
+    matchId: string;
+    predictedHomeScore: number;
+    predictedAwayScore: number;
+  }) => Promise<void>;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  useEffect(() => {
-    if (groups.length === 0) {
-      setOpenGroups([]);
-      return;
-    }
+  const sortedMatches = useMemo(
+    () =>
+      [...matches].sort(
+        (a, b) =>
+          new Date(a.kickoffUtc).getTime() - new Date(b.kickoffUtc).getTime()
+      ),
+    [matches]
+  );
 
-    setOpenGroups([groups[0].key]);
-  }, [groups]);
+  const finishedMatches = sortedMatches.filter(
+    (match) => match.status === "finished"
+  ).length;
 
-  function toggleGroup(key: string) {
-    setOpenGroups((current) =>
-      current.includes(key)
-        ? current.filter((item) => item !== key)
-        : [...current, key]
-    );
-  }
-
-  function openAllGroups() {
-    setOpenGroups(groups.map((group) => group.key));
-  }
-
-  function closeAllGroups() {
-    setOpenGroups([]);
-  }
-
-  if (groups.length === 0) {
-    return null;
-  }
+  const availableMatches = sortedMatches.filter(
+    (match) => match.status !== "finished"
+  ).length;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={openAllGroups}
-          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15"
-        >
-          Abrir todos
-        </button>
+    <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-white/5"
+      >
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-300">
+            <CalendarDays size={20} />
+          </div>
 
-        <button
-          type="button"
-          onClick={closeAllGroups}
-          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15"
-        >
-          Fechar todos
-        </button>
-      </div>
+          <div>
+            <h3 className="font-bold">{title}</h3>
 
-      {groups.map((group) => {
-        const isOpen = openGroups.includes(group.key);
-
-        return (
-          <section
-            key={group.key}
-            className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
-          >
-            <button
-              type="button"
-              onClick={() => toggleGroup(group.key)}
-              className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-white/5"
-            >
-              <div>
-                <h3 className="text-lg font-bold capitalize">{group.title}</h3>
-
-                <p className="text-sm text-slate-400">
-                  {group.matches.length} jogo(s)
-                  {group.subtitle ? ` · ${group.subtitle}` : ''}
-                </p>
-              </div>
-
-              {isOpen ? (
-                <ChevronDown className="text-emerald-300" />
-              ) : (
-                <ChevronRight className="text-slate-400" />
-              )}
-            </button>
-
-            {isOpen && (
-              <div className="grid gap-4 border-t border-white/10 p-4 md:grid-cols-2">
-                {group.matches.map((match) => (
-                  <MatchCard
-                    key={match.id}
-                    match={match}
-                    timezone={timezone}
-                    prediction={findPrediction(predictions, match)}
-                    onSavePrediction={onSavePrediction}
-                  />
-                ))}
-              </div>
+            {description && (
+              <p className="mt-1 text-sm text-slate-400">{description}</p>
             )}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
 
-function findPrediction(predictions: Prediction[], match: Match) {
-  return predictions.find((prediction) => prediction.matchId === match.id);
+            <p className="mt-1 text-xs text-slate-500">
+              {sortedMatches.length} jogo(s) · {availableMatches} por finalizar
+              · {finishedMatches} finalizado(s)
+            </p>
+          </div>
+        </div>
+
+        {isOpen ? (
+          <ChevronDown className="shrink-0 text-emerald-300" />
+        ) : (
+          <ChevronRight className="shrink-0 text-slate-400" />
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="border-t border-white/10 p-4">
+          {sortedMatches.length === 0 && (
+            <div className="rounded-xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">
+              Não existem jogos nesta secção.
+            </div>
+          )}
+
+          {sortedMatches.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {sortedMatches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  timezone={timezone}
+                  prediction={predictions.find(
+                    (prediction) => prediction.matchId === match.id
+                  )}
+                  onSavePrediction={onSavePrediction}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }

@@ -9,10 +9,12 @@ export function MatchPredictionStats({
   matchId,
   homeTeam,
   awayTeam,
+  refreshKey,
 }: {
   matchId: string;
   homeTeam: string;
   awayTeam: string;
+  refreshKey?: number;
 }) {
   const [stats, setStats] = useState<MatchPredictionStatsType | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -52,7 +54,7 @@ export function MatchPredictionStats({
     return () => {
       isMounted = false;
     };
-  }, [matchId]);
+  }, [matchId, refreshKey]);
 
   return (
     <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/60 p-3">
@@ -65,14 +67,12 @@ export function MatchPredictionStats({
         </div>
 
         {stats && (
-          <p className="text-xs text-slate-500">
-            {stats.total} palpite(s)
-          </p>
+          <p className="text-xs text-slate-500">{stats.total} palpite(s)</p>
         )}
       </div>
 
       {isLoadingStats && (
-        <p className="text-xs text-slate-500">A carregar estatísticas...</p>
+        <p className="text-xs text-slate-500">A atualizar estatísticas...</p>
       )}
 
       {!isLoadingStats && statsError && (
