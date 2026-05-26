@@ -1,6 +1,7 @@
-import { CalendarDays, Trophy, Target, Users, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, Trophy } from 'lucide-react';
 import { MatchCard } from '../components/MatchCard';
 import { ScoringRulesAccordion } from '../components/ScoringRulesAccordion';
+import type { League } from '../types';
 import { useLeagues } from '../lib/useLeagues';
 import { useMatches } from '../lib/useMatches';
 import { usePredictions } from '../lib/usePredictions';
@@ -52,75 +53,92 @@ export function Dashboard() {
           sobe no ranking
         </h2>
         <p className="mt-3 max-w-2xl text-sm font-medium text-slate-800">
-          Os teus palpites são feitos uma única vez por jogo e contam para o
-          ranking global e para todas as ligas privadas onde participas.
+          Dá o teu palpite uma vez por jogo. Ele conta para o ranking global e
+          para todas as ligas privadas onde participas.
         </p>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <p className="text-sm text-slate-400">Horário local da tua conta</p>
-        <p className="mt-1 text-lg font-bold text-emerald-300">{timezone}</p>
+      <section className="grid gap-3 md:grid-cols-[1fr_2fr]">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm text-slate-400">Horário local da tua conta</p>
+          <p className="mt-1 text-lg font-bold text-emerald-300">{timezone}</p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm text-slate-400">Ligas privadas</p>
+
+          {isLoadingLeagues && (
+            <p className="mt-1 text-sm text-slate-400">A carregar ligas...</p>
+          )}
+
+          {!isLoadingLeagues && leagues.length === 0 && (
+            <p className="mt-1 text-sm text-amber-300">
+              Ainda não estás em nenhuma liga privada.
+            </p>
+          )}
+
+          {!isLoadingLeagues && leagues.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {leagues.map((league) => (
+                <span
+                  key={league.id}
+                  className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-300"
+                >
+                  {league.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
         <div className="mb-4 flex items-center gap-2">
           <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-300">
-            <Users size={20} />
+            <Trophy size={20} />
           </div>
 
           <div>
-            <h3 className="text-lg font-bold">As minhas ligas</h3>
+            <h3 className="text-lg font-bold">A tua posição nos rankings</h3>
             <p className="text-sm text-slate-400">
-              Os teus palpites contam automaticamente para estas ligas.
+              Posição global e posição nas tuas ligas privadas.
             </p>
           </div>
         </div>
 
-        {isLoadingLeagues && (
-          <p className="text-sm text-slate-400">A carregar ligas...</p>
-        )}
+        <div className="grid gap-3 md:grid-cols-2">
+          <RankingPositionCard
+            title="Ranking Global"
+            subtitle="Todos os participantes"
+            position={myPosition}
+            isLoading={isLoadingRanking}
+          />
+
+          {isLoadingLeagues && (
+            <div className="rounded-xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">
+              A carregar ligas...
+            </div>
+          )}
+
+          {!isLoadingLeagues &&
+            leagues.map((league) =>
+              profile ? (
+                <LeagueRankingPositionCard
+                  key={league.id}
+                  league={league}
+                  userId={profile.id}
+                />
+              ) : null
+            )}
+        </div>
 
         {!isLoadingLeagues && leagues.length === 0 && (
-          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
-            Ainda não estás em nenhuma liga privada. Podes entrar numa liga com
-            um código de convite no menu <strong>Ligas</strong>.
+          <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
+            Entra numa liga com um código de convite no menu{' '}
+            <strong>Ligas</strong>.
           </div>
         )}
-
-        {!isLoadingLeagues && leagues.length > 0 && (
-          <div className="grid gap-3 md:grid-cols-2">
-            {leagues.map((league) => (
-              <div
-                key={league.id}
-                className="rounded-xl border border-white/10 bg-slate-950/70 p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-emerald-300">
-                      Estás nesta liga
-                    </p>
-                    <p className="mt-1 text-lg font-bold">{league.name}</p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Papel: {league.myRole === 'owner' ? 'Admin' : 'Membro'}
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
-                    Ativa
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <p className="mt-4 text-xs text-slate-500">
-          Nota: nesta fase, os palpites são globais. O ranking por liga será
-          calculado com base nas pessoas inscritas em cada liga.
-        </p>
       </section>
-
-      <ScoringRulesAccordion />
 
       {errorMessage && (
         <div className="rounded-2xl border border-red-400/30 bg-red-400/10 p-5 text-red-200">
@@ -128,52 +146,53 @@ export function Dashboard() {
         </div>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={<Trophy />}
-          label="A tua posição global"
-          value={myPosition ? `${myPosition}.º` : '-'}
-        />
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-300">
+            <CalendarDays size={20} />
+          </div>
 
-        <StatCard
-          icon={<Target />}
-          label="Pontos globais"
-          value={String(myRanking?.totalPoints ?? 0)}
-        />
+          <div>
+            <h3 className="font-bold">Resumo dos palpites</h3>
+            <p className="text-sm text-slate-400">
+              Acompanha rapidamente o que já fizeste e o que ainda falta.
+            </p>
+          </div>
+        </div>
 
-        <StatCard
-          icon={<CalendarDays />}
-          label="Jogos por palpitar"
-          value={String(pendingPredictions)}
-        />
+        <p className="text-3xl font-black">
+          {totalPredictions} / {totalMatches}
+        </p>
 
-        <StatCard
-          icon={<CheckCircle2 />}
-          label="Palpites feitos"
-          value={String(totalPredictions)}
-        />
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryItem
+            label="Jogos por palpitar"
+            value={String(pendingPredictions)}
+          />
+
+          <SummaryItem
+            label="Palpites feitos"
+            value={String(totalPredictions)}
+          />
+
+          <SummaryItem
+            label="Pontos"
+            value={String(myRanking?.totalPoints ?? 0)}
+          />
+
+          <SummaryItem
+            label="Resultados - Exatos / Acertos"
+            value={`${myRanking?.exactScores ?? 0} / ${
+              myRanking?.correctOutcomes ?? 0
+            }`}
+          />
+        </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2">
-        <InfoCard
-          icon={<Users />}
-          title="Ligas privadas"
-          value={String(leagues.length)}
-          description="Número de ligas onde estás inscrito."
-        />
-
-        <InfoCard
-          icon={<Trophy />}
-          title="Resumo no ranking global"
-          value={`${myRanking?.exactScores ?? 0} exato(s) · ${
-            myRanking?.correctOutcomes ?? 0
-          } acerto(s)`}
-          description="Placares exatos e resultados certos acumulados."
-        />
-      </section>
+      <ScoringRulesAccordion />
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold">Próximos jogos</h3>
             <p className="text-sm text-slate-400">
@@ -182,7 +201,10 @@ export function Dashboard() {
             </p>
           </div>
 
-          <a href="/jogos" className="text-sm font-medium text-emerald-300">
+          <a
+            href="/jogos"
+            className="shrink-0 text-sm font-medium text-emerald-300"
+          >
             Ver todos
           </a>
         </div>
@@ -217,41 +239,78 @@ export function Dashboard() {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
+function LeagueRankingPositionCard({
+  league,
+  userId,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
+  league: League;
+  userId: string;
+}) {
+  const { ranking, isLoadingRanking, rankingError } = useRanking(league.id);
+
+  const myLeagueRankingIndex = ranking.findIndex((row) => row.userId === userId);
+  const myLeaguePosition =
+    myLeagueRankingIndex >= 0 ? myLeagueRankingIndex + 1 : null;
+
+  return (
+    <RankingPositionCard
+      title={league.name}
+      subtitle="Liga privada"
+      position={myLeaguePosition}
+      isLoading={isLoadingRanking}
+      errorMessage={rankingError}
+    />
+  );
+}
+
+function RankingPositionCard({
+  title,
+  subtitle,
+  position,
+  isLoading,
+  errorMessage,
+}: {
+  title: string;
+  subtitle: string;
+  position: number | null;
+  isLoading: boolean;
+  errorMessage?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div className="mb-3 text-emerald-300">{icon}</div>
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="text-2xl font-black">{value}</p>
+    <div className="rounded-xl border border-white/10 bg-slate-950/70 p-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-emerald-300">
+            {subtitle}
+          </p>
+          <h4 className="mt-1 text-lg font-bold">{title}</h4>
+        </div>
+
+        <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-300">
+          <Trophy size={18} />
+        </div>
+      </div>
+
+      {isLoading && <p className="text-sm text-slate-400">A carregar...</p>}
+
+      {!isLoading && errorMessage && (
+        <p className="text-sm text-red-300">{errorMessage}</p>
+      )}
+
+      {!isLoading && !errorMessage && (
+        <p className="text-4xl font-black text-white">
+          {position ? `${position}.º` : '-'}
+        </p>
+      )}
     </div>
   );
 }
 
-function InfoCard({
-  icon,
-  title,
-  value,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string;
-  description: string;
-}) {
+function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div className="mb-3 text-emerald-300">{icon}</div>
-      <p className="text-sm text-slate-400">{title}</p>
-      <p className="mt-1 text-lg font-bold">{value}</p>
-      <p className="mt-2 text-sm text-slate-500">{description}</p>
+    <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-black">{value}</p>
     </div>
   );
 }
