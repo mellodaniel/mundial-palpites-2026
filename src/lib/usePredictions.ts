@@ -83,8 +83,6 @@ export function usePredictions() {
 
       return [...currentPredictions, savedPrediction];
     });
-
-    return savedPrediction;
   }
 
   return {
