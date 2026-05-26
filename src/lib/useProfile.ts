@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Profile } from '../types';
 import { useAuth } from './useAuth';
-import { getProfile } from './profileApi';
+import { getProfile, updateProfileTimezone } from './profileApi';
 
 export function useProfile() {
   const { user, isLoadingAuth } = useAuth();
@@ -52,9 +52,21 @@ export function useProfile() {
     };
   }, [user, isLoadingAuth]);
 
+  async function saveTimezone(timezone: string) {
+    if (!user) {
+      throw new Error('Precisas de estar autenticado.');
+    }
+
+    const updatedProfile = await updateProfileTimezone(user.id, timezone);
+    setProfile(updatedProfile);
+
+    return updatedProfile;
+  }
+
   return {
     profile,
     isLoadingProfile,
     profileError,
+    saveTimezone,
   };
 }

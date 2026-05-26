@@ -1,5 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Trophy, CalendarDays, BarChart3, Shield, LogOut } from 'lucide-react';
+import {
+  Trophy,
+  CalendarDays,
+  BarChart3,
+  Shield,
+  LogOut,
+  User,
+} from 'lucide-react';
 import { signOut } from '../lib/auth';
 import { useProfile } from '../lib/useProfile';
 
@@ -11,6 +18,8 @@ export function Layout() {
     await signOut();
     navigate('/login');
   }
+
+  const mobileColumns = profile?.isAdmin ? 'grid-cols-5' : 'grid-cols-4';
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -50,7 +59,7 @@ export function Layout() {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-900/95 backdrop-blur md:hidden">
-        <div className={`grid ${profile?.isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+        <div className={`grid ${mobileColumns}`}>
           <MobileNavLink to="/" icon={<Trophy size={20} />} label="Início" />
           <MobileNavLink
             to="/jogos"
@@ -61,6 +70,11 @@ export function Layout() {
             to="/ranking"
             icon={<BarChart3 size={20} />}
             label="Ranking"
+          />
+          <MobileNavLink
+            to="/perfil"
+            icon={<User size={20} />}
+            label="Perfil"
           />
           {profile?.isAdmin && (
             <MobileNavLink
@@ -77,7 +91,10 @@ export function Layout() {
           <DesktopNavLink to="/">Dashboard</DesktopNavLink>
           <DesktopNavLink to="/jogos">Jogos</DesktopNavLink>
           <DesktopNavLink to="/ranking">Ranking</DesktopNavLink>
-          {profile?.isAdmin && <DesktopNavLink to="/admin">Admin</DesktopNavLink>}
+          <DesktopNavLink to="/perfil">Perfil</DesktopNavLink>
+          {profile?.isAdmin && (
+            <DesktopNavLink to="/admin">Admin</DesktopNavLink>
+          )}
         </div>
       </nav>
     </div>
@@ -97,7 +114,7 @@ function MobileNavLink({
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-2 py-3 text-xs ${
+        `flex flex-col items-center gap-1 px-1 py-3 text-[11px] ${
           isActive ? 'text-emerald-400' : 'text-slate-400'
         }`
       }

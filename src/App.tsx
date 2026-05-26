@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Matches } from './pages/Matches';
 import { Ranking } from './pages/Ranking';
+import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 
 const router = createBrowserRouter([
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
           {
             path: 'ranking',
             element: <Ranking />,
+          },
+          {
+            path: 'perfil',
+            element: <Profile />,
           },
           {
             element: <AdminRoute />,

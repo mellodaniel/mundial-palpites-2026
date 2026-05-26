@@ -31,17 +31,32 @@ export async function getProfile(userId: string): Promise<Profile> {
   return mapProfileRowToProfile(data);
 }
 
-export async function updateProfileTimezone(userId: string, timezone: string) {
-  const { error } = await supabase
+export async function updateProfileTimezone(
+  userId: string,
+  timezone: string
+): Promise<Profile> {
+  const { data, error } = await supabase
     .from('profiles')
     .update({
       timezone,
     })
-    .eq('id', userId);
+    .eq('id', userId)
+    .select(
+      `
+      id,
+      name,
+      avatar_url,
+      is_admin,
+      timezone
+    `
+    )
+    .single();
 
   if (error) {
     throw error;
   }
+
+  return mapProfileRowToProfile(data);
 }
 
 function mapProfileRowToProfile(row: ProfileRow): Profile {
