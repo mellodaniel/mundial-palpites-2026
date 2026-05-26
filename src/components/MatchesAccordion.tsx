@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Match, Prediction } from '../types';
 import type { MatchGroup } from '../lib/groupMatches';
 import { MatchCard } from './MatchCard';
@@ -21,9 +21,16 @@ export function MatchesAccordion({
   timezone,
   onSavePrediction,
 }: Props) {
-  const [openGroups, setOpenGroups] = useState<string[]>(() =>
-    groups.slice(0, 1).map((group) => group.key)
-  );
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (groups.length === 0) {
+      setOpenGroups([]);
+      return;
+    }
+
+    setOpenGroups([groups[0].key]);
+  }, [groups]);
 
   function toggleGroup(key: string) {
     setOpenGroups((current) =>
@@ -33,8 +40,38 @@ export function MatchesAccordion({
     );
   }
 
+  function openAllGroups() {
+    setOpenGroups(groups.map((group) => group.key));
+  }
+
+  function closeAllGroups() {
+    setOpenGroups([]);
+  }
+
+  if (groups.length === 0) {
+    return null;
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={openAllGroups}
+          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15"
+        >
+          Abrir todos
+        </button>
+
+        <button
+          type="button"
+          onClick={closeAllGroups}
+          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15"
+        >
+          Fechar todos
+        </button>
+      </div>
+
       {groups.map((group) => {
         const isOpen = openGroups.includes(group.key);
 
@@ -49,9 +86,11 @@ export function MatchesAccordion({
               className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-white/5"
             >
               <div>
-                <h3 className="text-lg font-bold">{group.title}</h3>
+                <h3 className="text-lg font-bold capitalize">{group.title}</h3>
+
                 <p className="text-sm text-slate-400">
                   {group.matches.length} jogo(s)
+                  {group.subtitle ? ` · ${group.subtitle}` : ''}
                 </p>
               </div>
 

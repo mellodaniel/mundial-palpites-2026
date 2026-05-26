@@ -4,6 +4,7 @@ import { formatDateInTimezone, getDateKeyInTimezone } from './timezone';
 export type MatchGroup = {
   key: string;
   title: string;
+  subtitle?: string;
   matches: Match[];
 };
 
@@ -20,14 +21,13 @@ export function groupMatchesByGroup(matches: Match[]): MatchGroup[] {
     grouped.get(groupName)!.push(match);
   }
 
-  return Array.from(grouped.entries()).map(([key, groupMatches]) => ({
-    key,
-    title: key,
-    matches: groupMatches.sort(
-      (a, b) =>
-        new Date(a.kickoffUtc).getTime() - new Date(b.kickoffUtc).getTime()
-    ),
-  }));
+  return Array.from(grouped.entries())
+    .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+    .map(([key, groupMatches]) => ({
+      key: `group-${key}`,
+      title: key,
+      matches: sortMatchesByKickoff(groupMatches),
+    }));
 }
 
 export function groupMatchesByDay(
@@ -37,23 +37,32 @@ export function groupMatchesByDay(
   const grouped = new Map<string, Match[]>();
 
   for (const match of matches) {
-    const key = getDateKeyInTimezone(match.kickoffUtc, timezone);
+    const dateKey = getDateKeyInTimezone(match.kickoffUtc, timezone);
 
-    if (!grouped.has(key)) {
-      grouped.set(key, []);
+    if (!grouped.has(dateKey)) {
+      grouped.set(dateKey, []);
     }
 
-    grouped.get(key)!.push(match);
+    grouped.get(dateKey)!.push(match);
   }
 
   return Array.from(grouped.entries())
     .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-    .map(([key, dayMatches]) => ({
-      key,
-      title: formatDateInTimezone(dayMatches[0].kickoffUtc, timezone),
-      matches: dayMatches.sort(
-        (a, b) =>
-          new Date(a.kickoffUtc).getTime() - new Date(b.kickoffUtc).getTime()
-      ),
-    }));
+    .map(([dateKey, dayMatches]) => {
+      const sortedMatches = sortMatchesByKickoff(dayMatches);
+
+      return {
+        key: `day-${dateKey}`,
+        title: formatDateInTimezone(sortedMatches[0].kickoffUtc, timezone),
+        subtitle: timezone,
+        matches: sortedMatches,
+      };
+    });
+}
+
+function sortMatchesByKickoff(matches: Match[]) {
+  return [...matches].sort(
+    (a, b) =>
+      new Date(a.kickoffUtc).getTime() - new Date(b.kickoffUtc).getTime()
+  );
 }
