@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { AdminUsersManagement } from '../components/AdminUsersManagement';
+import { AdminLeaguesManagement } from '../components/AdminLeaguesManagement';
 import { useMatches } from '../lib/useMatches';
 import {
   finishMatchAndRecalculatePoints,
@@ -331,8 +332,8 @@ export function Admin() {
       <div>
         <h2 className="text-2xl font-black">Admin</h2>
         <p className="text-sm text-slate-400">
-          Área para importar jogos, atualizar eliminatórias, inserir resultados,
-          reabrir jogos e recalcular pontuações.
+          Área para importar jogos, atualizar eliminatórias, gerir utilizadores,
+          gerir ligas, inserir resultados, reabrir jogos e recalcular pontuações.
         </p>
       </div>
 
@@ -371,6 +372,8 @@ export function Admin() {
           <Messages successMessage={successMessage} errorMessage={errorMessage} />
 
           <AdminUsersManagement />
+
+          <AdminLeaguesManagement />
 
           <AdminSection
             id="summary"
