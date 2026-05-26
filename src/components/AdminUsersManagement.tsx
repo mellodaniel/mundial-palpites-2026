@@ -13,6 +13,7 @@ import {
   UserCog,
   Users,
 } from 'lucide-react';
+import { useAuth } from '../lib/useAuth';
 import {
   getAdminUsers,
   updateUserAccountStatus,
@@ -22,6 +23,8 @@ import {
 } from '../lib/adminUsersApi';
 
 export function AdminUsersManagement() {
+  const { user: loggedUser } = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
   const [openUserIds, setOpenUserIds] = useState<string[]>([]);
   const [users, setUsers] = useState<AdminUserRow[]>([]);
@@ -94,7 +97,18 @@ export function AdminUsersManagement() {
     setOpenUserIds([]);
   }
 
+  function isCurrentUser(userId: string) {
+    return loggedUser?.id === userId;
+  }
+
   async function handleToggleAdmin(user: AdminUserRow) {
+    if (isCurrentUser(user.id)) {
+      setErrorMessage(
+        'Não podes remover ou alterar o teu próprio acesso admin.'
+      );
+      return;
+    }
+
     if (user.accountStatus === 'deleted') {
       setErrorMessage(
         'Não é possível alterar permissões de um utilizador removido.'
@@ -149,6 +163,13 @@ export function AdminUsersManagement() {
     user: AdminUserRow,
     status: AccountStatus
   ) {
+    if (isCurrentUser(user.id)) {
+      setErrorMessage(
+        'Não podes desativar, bloquear, excluir ou reativar a tua própria conta.'
+      );
+      return;
+    }
+
     const messages: Record<AccountStatus, string> = {
       active: `Queres reativar o utilizador "${user.name}"?`,
       disabled: `Queres desativar o utilizador "${user.name}"? Ele deixará de conseguir usar a app.`,
@@ -250,6 +271,11 @@ export function AdminUsersManagement() {
             </div>
           )}
 
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            Por segurança, o admin logado não pode remover o próprio acesso
+            admin, nem desativar, bloquear ou excluir a própria conta.
+          </div>
+
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-300">
@@ -344,6 +370,7 @@ export function AdminUsersManagement() {
                 <UserCard
                   key={user.id}
                   user={user}
+                  isCurrentUser={isCurrentUser(user.id)}
                   isOpen={openUserIds.includes(user.id)}
                   isSaving={isSavingUserId === user.id}
                   onToggleOpen={toggleUser}
@@ -370,6 +397,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 
 function UserCard({
   user,
+  isCurrentUser,
   isOpen,
   isSaving,
   onToggleOpen,
@@ -377,6 +405,7 @@ function UserCard({
   onChangeAccountStatus,
 }: {
   user: AdminUserRow;
+  isCurrentUser: boolean;
   isOpen: boolean;
   isSaving: boolean;
   onToggleOpen: (userId: string) => void;
@@ -384,6 +413,7 @@ function UserCard({
   onChangeAccountStatus: (user: AdminUserRow, status: AccountStatus) => void;
 }) {
   const isDeleted = user.accountStatus === 'deleted';
+  const protectedSelfAction = isCurrentUser || isDeleted;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70">
@@ -395,6 +425,12 @@ function UserCard({
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <h4 className="text-lg font-black">{user.name}</h4>
+
+            {isCurrentUser && (
+              <span className="inline-flex items-center rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300">
+                Tu
+              </span>
+            )}
 
             <StatusBadge status={user.accountStatus} />
 
@@ -426,6 +462,13 @@ function UserCard({
 
       {isOpen && (
         <div className="space-y-4 border-t border-white/10 p-4">
+          {isCurrentUser && (
+            <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+              Esta é a tua conta. As ações críticas estão bloqueadas para evitar
+              perda de acesso.
+            </div>
+          )}
+
           <p className="text-sm text-slate-400">
             Criado em {formatDate(user.createdAt)}
           </p>
@@ -472,8 +515,8 @@ function UserCard({
             <button
               type="button"
               onClick={() => onToggleAdmin(user)}
-              disabled={isSaving || isDeleted}
-              className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+              disabled={isSaving || protectedSelfAction}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
                 user.isAdmin
                   ? 'bg-red-500/10 text-red-200 hover:bg-red-500/15'
                   : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
@@ -491,8 +534,8 @@ function UserCard({
               <button
                 type="button"
                 onClick={() => onChangeAccountStatus(user, 'active')}
-                disabled={isSaving}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSaving || isCurrentUser}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Undo2 size={18} />
                 Reativar
@@ -502,8 +545,8 @@ function UserCard({
                 <button
                   type="button"
                   onClick={() => onChangeAccountStatus(user, 'disabled')}
-                  disabled={isSaving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 font-semibold text-slate-200 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSaving || isCurrentUser}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 font-semibold text-slate-200 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Power size={18} />
                   Desativar
@@ -512,8 +555,8 @@ function UserCard({
                 <button
                   type="button"
                   onClick={() => onChangeAccountStatus(user, 'blocked')}
-                  disabled={isSaving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 font-semibold text-amber-200 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSaving || isCurrentUser}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 font-semibold text-amber-200 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Ban size={18} />
                   Bloquear
@@ -522,8 +565,8 @@ function UserCard({
                 <button
                   type="button"
                   onClick={() => onChangeAccountStatus(user, 'deleted')}
-                  disabled={isSaving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 font-semibold text-red-200 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSaving || isCurrentUser}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 font-semibold text-red-200 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Trash2 size={18} />
                   Excluir
