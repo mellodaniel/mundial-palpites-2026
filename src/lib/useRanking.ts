@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { RankingRow } from '../types';
 import { getRanking } from './rankingApi';
 
-export function useRanking() {
+export function useRanking(leagueId?: string) {
   const [ranking, setRanking] = useState<RankingRow[]>([]);
   const [isLoadingRanking, setIsLoadingRanking] = useState(true);
   const [rankingError, setRankingError] = useState('');
@@ -15,7 +15,9 @@ export function useRanking() {
         setIsLoadingRanking(true);
         setRankingError('');
 
-        const rankingFromApi = await getRanking();
+        const rankingFromApi = await getRanking({
+          leagueId,
+        });
 
         if (!isMounted) return;
 
@@ -39,11 +41,20 @@ export function useRanking() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [leagueId]);
+
+  async function refreshRanking() {
+    const rankingFromApi = await getRanking({
+      leagueId,
+    });
+
+    setRanking(rankingFromApi);
+  }
 
   return {
     ranking,
     isLoadingRanking,
     rankingError,
+    refreshRanking,
   };
 }
