@@ -146,3 +146,38 @@ export async function importMatchesFromJson(matches: MatchImportItem[]) {
     importedMatches: rows.length,
   };
 }
+
+export async function updateKnockoutMatchTeams(params: {
+  matchId: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamCode?: string;
+  awayTeamCode?: string;
+}) {
+  const { matchId, homeTeam, awayTeam, homeTeamCode, awayTeamCode } = params;
+
+  const cleanHomeTeam = homeTeam.trim();
+  const cleanAwayTeam = awayTeam.trim();
+  const cleanHomeTeamCode = homeTeamCode?.trim().toUpperCase() || null;
+  const cleanAwayTeamCode = awayTeamCode?.trim().toUpperCase() || null;
+
+  if (!cleanHomeTeam || !cleanAwayTeam) {
+    throw new Error('Preenche as duas equipas.');
+  }
+
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      home_team: cleanHomeTeam,
+      away_team: cleanAwayTeam,
+      home_team_code: cleanHomeTeamCode,
+      away_team_code: cleanAwayTeamCode,
+      status: 'scheduled',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', matchId);
+
+  if (error) {
+    throw error;
+  }
+}
