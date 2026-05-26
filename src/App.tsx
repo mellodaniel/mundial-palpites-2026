@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Matches } from './pages/Matches';
 import { Ranking } from './pages/Ranking';
+import { Leagues } from './pages/Leagues';
 import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
           {
             path: 'ranking',
             element: <Ranking />,
+          },
+          {
+            path: 'ligas',
+            element: <Leagues />,
           },
           {
             path: 'perfil',

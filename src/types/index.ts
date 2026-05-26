@@ -67,3 +67,20 @@ export type Profile = {
   isAdmin: boolean;
   timezone: string;
 };
+
+export type League = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  createdBy: string;
+  createdAt: string;
+  myRole?: string;
+};
+
+export type LeagueMember = {
+  id: string;
+  leagueId: string;
+  userId: string;
+  role: string;
+  createdAt: string;
+};

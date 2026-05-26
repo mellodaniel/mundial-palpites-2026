@@ -1,6 +1,7 @@
 import { CalendarDays, Trophy, Target, Users, CheckCircle2 } from 'lucide-react';
 import { MatchCard } from '../components/MatchCard';
 import { ScoringRulesAccordion } from '../components/ScoringRulesAccordion';
+import { useLeagues } from '../lib/useLeagues';
 import { useMatches } from '../lib/useMatches';
 import { usePredictions } from '../lib/usePredictions';
 import { useProfile } from '../lib/useProfile';
@@ -8,6 +9,7 @@ import { useRanking } from '../lib/useRanking';
 
 export function Dashboard() {
   const { profile } = useProfile();
+  const { leagues, isLoadingLeagues } = useLeagues();
   const { matches, isLoadingMatches, matchesError } = useMatches();
   const {
     predictions,
@@ -50,14 +52,72 @@ export function Dashboard() {
           sobe no ranking
         </h2>
         <p className="mt-3 max-w-2xl text-sm font-medium text-slate-800">
-          Dá palpites antes dos jogos, acompanha os resultados e compete com os
-          amigos até ao final do Mundial.
+          Os teus palpites são feitos uma única vez por jogo e contam para o
+          ranking global e para todas as ligas privadas onde participas.
         </p>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <p className="text-sm text-slate-400">Horário local da tua conta</p>
         <p className="mt-1 text-lg font-bold text-emerald-300">{timezone}</p>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-300">
+            <Users size={20} />
+          </div>
+
+          <div>
+            <h3 className="text-lg font-bold">As minhas ligas</h3>
+            <p className="text-sm text-slate-400">
+              Os teus palpites contam automaticamente para estas ligas.
+            </p>
+          </div>
+        </div>
+
+        {isLoadingLeagues && (
+          <p className="text-sm text-slate-400">A carregar ligas...</p>
+        )}
+
+        {!isLoadingLeagues && leagues.length === 0 && (
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
+            Ainda não estás em nenhuma liga privada. Podes entrar numa liga com
+            um código de convite no menu <strong>Ligas</strong>.
+          </div>
+        )}
+
+        {!isLoadingLeagues && leagues.length > 0 && (
+          <div className="grid gap-3 md:grid-cols-2">
+            {leagues.map((league) => (
+              <div
+                key={league.id}
+                className="rounded-xl border border-white/10 bg-slate-950/70 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-emerald-300">
+                      Estás nesta liga
+                    </p>
+                    <p className="mt-1 text-lg font-bold">{league.name}</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Papel: {league.myRole === 'owner' ? 'Admin' : 'Membro'}
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
+                    Ativa
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-4 text-xs text-slate-500">
+          Nota: nesta fase, os palpites são globais. O ranking por liga será
+          calculado com base nas pessoas inscritas em cada liga.
+        </p>
       </section>
 
       <ScoringRulesAccordion />
@@ -71,13 +131,13 @@ export function Dashboard() {
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Trophy />}
-          label="A tua posição"
+          label="A tua posição global"
           value={myPosition ? `${myPosition}.º` : '-'}
         />
 
         <StatCard
           icon={<Target />}
-          label="Pontos"
+          label="Pontos globais"
           value={String(myRanking?.totalPoints ?? 0)}
         />
 
@@ -97,14 +157,14 @@ export function Dashboard() {
       <section className="grid gap-3 sm:grid-cols-2">
         <InfoCard
           icon={<Users />}
-          title="Liga atual"
-          value="Global"
-          description="As ligas privadas serão adicionadas numa próxima fase."
+          title="Ligas privadas"
+          value={String(leagues.length)}
+          description="Número de ligas onde estás inscrito."
         />
 
         <InfoCard
           icon={<Trophy />}
-          title="Resumo no ranking"
+          title="Resumo no ranking global"
           value={`${myRanking?.exactScores ?? 0} exato(s) · ${
             myRanking?.correctOutcomes ?? 0
           } acerto(s)`}
@@ -117,7 +177,8 @@ export function Dashboard() {
           <div>
             <h3 className="text-lg font-bold">Próximos jogos</h3>
             <p className="text-sm text-slate-400">
-              Jogos ainda disponíveis para acompanhar e palpitar.
+              Dá o teu palpite uma vez por jogo. Ele conta para todas as tuas
+              ligas.
             </p>
           </div>
 

@@ -6,6 +6,7 @@ import {
   Shield,
   LogOut,
   User,
+  Users,
 } from 'lucide-react';
 import { signOut } from '../lib/auth';
 import { useProfile } from '../lib/useProfile';
@@ -19,7 +20,7 @@ export function Layout() {
     navigate('/login');
   }
 
-  const mobileColumns = profile?.isAdmin ? 'grid-cols-5' : 'grid-cols-4';
+  const mobileColumns = profile?.isAdmin ? 'grid-cols-6' : 'grid-cols-5';
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -72,6 +73,11 @@ export function Layout() {
             label="Ranking"
           />
           <MobileNavLink
+            to="/ligas"
+            icon={<Users size={20} />}
+            label="Ligas"
+          />
+          <MobileNavLink
             to="/perfil"
             icon={<User size={20} />}
             label="Perfil"
@@ -91,6 +97,7 @@ export function Layout() {
           <DesktopNavLink to="/">Dashboard</DesktopNavLink>
           <DesktopNavLink to="/jogos">Jogos</DesktopNavLink>
           <DesktopNavLink to="/ranking">Ranking</DesktopNavLink>
+          <DesktopNavLink to="/ligas">Ligas</DesktopNavLink>
           <DesktopNavLink to="/perfil">Perfil</DesktopNavLink>
           {profile?.isAdmin && (
             <DesktopNavLink to="/admin">Admin</DesktopNavLink>
@@ -114,7 +121,7 @@ function MobileNavLink({
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-1 py-3 text-[11px] ${
+        `flex flex-col items-center gap-1 px-1 py-3 text-[10px] ${
           isActive ? 'text-emerald-400' : 'text-slate-400'
         }`
       }
