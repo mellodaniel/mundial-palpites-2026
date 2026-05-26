@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
-import type { Profile } from '../types';
+import type { AccountStatus, Profile } from '../types';
+import { supabase } from './supabase';
 import { useAuth } from './useAuth';
-import { getProfile, updateProfileTimezone } from './profileApi';
+
+type ProfileRow = {
+  id: string;
+  name: string | null;
+  avatar_url: string | null;
+  is_admin: boolean | null;
+  timezone: string | null;
+  account_status: AccountStatus | null;
+};
 
 export function useProfile() {
   const { user, isLoadingAuth } = useAuth();
@@ -26,11 +35,28 @@ export function useProfile() {
         setIsLoadingProfile(true);
         setProfileError('');
 
-        const profileFromApi = await getProfile(user.id);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(
+            `
+            id,
+            name,
+            avatar_url,
+            is_admin,
+            timezone,
+            account_status
+          `
+          )
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          throw error;
+        }
 
         if (!isMounted) return;
 
-        setProfile(profileFromApi);
+        setProfile(mapProfileRowToProfile(data as ProfileRow));
       } catch (error) {
         if (!isMounted) return;
 
@@ -52,21 +78,20 @@ export function useProfile() {
     };
   }, [user, isLoadingAuth]);
 
-  async function saveTimezone(timezone: string) {
-    if (!user) {
-      throw new Error('Precisas de estar autenticado.');
-    }
-
-    const updatedProfile = await updateProfileTimezone(user.id, timezone);
-    setProfile(updatedProfile);
-
-    return updatedProfile;
-  }
-
   return {
     profile,
     isLoadingProfile,
     profileError,
-    saveTimezone,
+  };
+}
+
+function mapProfileRowToProfile(row: ProfileRow): Profile {
+  return {
+    id: row.id,
+    name: row.name || 'Utilizador',
+    avatarUrl: row.avatar_url ?? undefined,
+    isAdmin: Boolean(row.is_admin),
+    timezone: row.timezone || 'Europe/Lisbon',
+    accountStatus: row.account_status ?? 'active',
   };
 }

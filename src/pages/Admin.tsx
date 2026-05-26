@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import {
   Calculator,
   RefreshCcw,
@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
+import { AdminUsersManagement } from '../components/AdminUsersManagement';
 import { useMatches } from '../lib/useMatches';
 import {
   finishMatchAndRecalculatePoints,
@@ -112,8 +113,7 @@ export function Admin() {
   );
 
   const selectedKnockoutMatch = useMemo(
-    () =>
-      knockoutMatches.find((match) => match.id === selectedKnockoutMatchId),
+    () => knockoutMatches.find((match) => match.id === selectedKnockoutMatchId),
     [knockoutMatches, selectedKnockoutMatchId]
   );
 
@@ -185,7 +185,7 @@ export function Admin() {
     setErrorMessage('');
   }
 
-  async function handleFinishMatch(event: React.FormEvent) {
+  async function handleFinishMatch(event: FormEvent) {
     event.preventDefault();
 
     const parsedHomeScore = Number(homeScore);
@@ -224,9 +224,7 @@ export function Admin() {
       );
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'Erro ao guardar resultado.';
+        error instanceof Error ? error.message : 'Erro ao guardar resultado.';
 
       setErrorMessage(message);
     } finally {
@@ -286,7 +284,7 @@ export function Admin() {
     }
   }
 
-  async function handleUpdateKnockoutTeams(event: React.FormEvent) {
+  async function handleUpdateKnockoutTeams(event: FormEvent) {
     event.preventDefault();
 
     if (!selectedKnockoutMatchId) {
@@ -371,6 +369,8 @@ export function Admin() {
       {!isLoadingMatches && !matchesError && (
         <>
           <Messages successMessage={successMessage} errorMessage={errorMessage} />
+
+          <AdminUsersManagement />
 
           <AdminSection
             id="summary"
@@ -761,10 +761,10 @@ function AdminSection({
   id: string;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   isOpen: boolean;
   onToggle: (sectionId: string) => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
@@ -829,7 +829,7 @@ function SummaryCard({
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {

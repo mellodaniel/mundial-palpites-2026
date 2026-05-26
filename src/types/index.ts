@@ -1,5 +1,7 @@
 export type MatchStatus = 'scheduled' | 'locked' | 'finished';
 
+export type AccountStatus = 'active' | 'disabled' | 'blocked' | 'deleted';
+
 export type Match = {
   id: string;
   externalId?: string;
@@ -66,6 +68,7 @@ export type Profile = {
   avatarUrl?: string;
   isAdmin: boolean;
   timezone: string;
+  accountStatus: AccountStatus;
 };
 
 export type League = {
